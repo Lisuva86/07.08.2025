@@ -38,5 +38,9 @@ func RegisterUserHandlers(routerGroup *gin.RouterGroup, controller controller.Co
 		target_url := routerGroup.Group("/target-to-task/:id")
 		target_url.POST("", h.postTargetToTaskHandler)
 	}
-	//--------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------status
+	{
+		status := routerGroup.Group("/task-status/:id")
+		status.GET("", h.getTaskStatusByIDHandler)
+	}
 }

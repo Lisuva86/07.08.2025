@@ -31,10 +31,10 @@ func (c *Controller) GetTaskByID(id int) (*entity.Task, error){
 		return nil, err
 	}
 }
-func (c *Controller) GetTaskStatusByID(id int) (int64,error){
+func (c *Controller) GetTaskStatusByID(id int) (entity.TaskStatus,error){
 	task, err := c.GetTaskByID(id)
 	if err != nil{
-		return -1,err
+		return entity.TaskStatusNone,err
 	}
 	return task.Status, nil
 }

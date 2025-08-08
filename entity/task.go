@@ -1,13 +1,32 @@
 package entity
 
+type TaskStatus int
+
 const (
-	TaskStatusEmpty = iota
+	TaskStatusEmpty TaskStatus = iota
 	TaskStatusArchive
 	TaskStatusDone
+	TaskStatusNone
 )
 
 type Task struct {
-	Status   int64
-	ZipPath  string
-	URLSLice []string
+	Status   TaskStatus `json:"status"`
+	ZipPath  string     `json:"zip_path"`
+	URLSLice []string   `json:"urls"`
+}
+
+func (s TaskStatus) String() string {
+	switch s {
+	case TaskStatusEmpty:
+		return "empty"
+	case TaskStatusArchive:
+		return "archive"
+	case TaskStatusDone:
+		return "done"
+	default:
+		return "unknown"
+	}
+}
+func (s TaskStatus) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + s.String() + `"`), nil
 }
