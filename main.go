@@ -12,4 +12,5 @@ func main() {
 	api.RegisterUserHandlers(v1, *controller)
 	a.Run(":8080")
 	//
+
 }
