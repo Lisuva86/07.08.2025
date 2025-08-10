@@ -6,10 +6,10 @@ import (
 )
 
 func main() {
-	controller := controller.New() 
-    a := api.Init()
-    v1 := a.Group("/api/v1")
-    api.RegisterUserHandlers(v1, *controller)
+	controller := controller.New()
+	a := api.Init()
+	v1 := a.Group("/api/v1")
+	api.RegisterUserHandlers(v1, *controller)
 	a.Run(":8080")
-	
+	//
 }
