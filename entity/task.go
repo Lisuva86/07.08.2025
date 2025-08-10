@@ -15,6 +15,8 @@ type Task struct {
 	URLSLice []string   `json:"urls"`
 }
 
+//todo переделаь на URL result
+
 func (s TaskStatus) String() string {
 	switch s {
 	case TaskStatusEmpty:

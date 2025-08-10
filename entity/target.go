@@ -10,3 +10,9 @@ var AllowedExtensions = map[string]bool{
 	".png":  true,
 	".pdf":  true,
 }
+var AllowedMIMETypes = map[string]bool{
+	"image/jpeg":      true,
+	"image/jpg":       true,
+	"image/png":       true,
+	"application/pdf": true,
+}

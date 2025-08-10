@@ -10,32 +10,74 @@ import (
 type createTargetResponce struct {
 	Task entity.Task `json:"task"`
 }
+
 func (h *handlers) postTargetToTaskHandler(c *gin.Context) {
-    var uriID URIID
-    err := c.ShouldBindUri(&uriID)
-    if err != nil{
-        c.JSON(429, gin.H{
+	var uriID URIID
+	err := c.ShouldBindUri(&uriID)
+	if err != nil {
+		c.JSON(429, gin.H{
 			"error": err.Error(),
 		})
-    }
-    var body entity.Target
-    err = c.ShouldBindJSON(&body)
+	}
+	var body entity.Target
+	err = c.ShouldBindJSON(&body)
 	if err != nil {
-        c.JSON(429, gin.H{
+		c.JSON(429, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
-    task, err := h.controller.AddTargetToTaskByTaskID(uriID.ID, body.URL)
-    if err != nil{
-        c.JSON(429, gin.H{
+	task, err := h.controller.AddTargetToTaskByTaskID(uriID.ID, body.URL)
+	if err != nil {
+		c.JSON(429, gin.H{
 			"error": err.Error(),
 		})
-        return
-    }
-    var responce createTargetResponce
-    responce.Task = *task
+		return
+	}
+	var responce createTargetResponce
+	responce.Task = *task
 
-   
-    c.JSON(http.StatusOK, responce)
+	c.JSON(http.StatusOK, responce)
+}
+
+func (h *handlers) deleteAFTERTESTHANDLER(c *gin.Context) {
+	var uriID URIID
+	err := c.ShouldBindUri(&uriID)
+	if err != nil {
+		c.JSON(429, gin.H{
+			"error": err.Error(),
+		})
+	}
+
+	task, err := h.controller.GetTaskByID(uriID.ID)
+	if err != nil {
+		c.JSON(429, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	results, err := h.controller.CheckAvailability(task.URLSLice)
+	if err != nil {
+		c.JSON(429, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	res, err := h.controller.CheckFileType(results)
+	if err != nil {
+		c.JSON(429, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	downloads := h.controller.DownloadAllowedFiles(res)
+	zip, err := h.controller.ArchiveFiles(downloads)
+	if err != nil {
+		c.JSON(429, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, zip)
 }

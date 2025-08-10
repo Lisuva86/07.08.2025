@@ -10,7 +10,7 @@ func (c *Controller) AddTargetToTaskByTaskID(id int, URLs []string) (*entity.Tas
 	}
 
 	//проверить статус, ессли доне то выходим
-	if task.Status == entity.TaskStatusDone{
+	if task.Status == entity.TaskStatusDone {
 		return task, nil
 	}
 	//проверить можем ли добавить задачу
@@ -22,6 +22,7 @@ func (c *Controller) AddTargetToTaskByTaskID(id int, URLs []string) (*entity.Tas
 			break
 		}
 		task.URLSLice = append(task.URLSLice, item)
+
 	}
 
 	return task, nil
