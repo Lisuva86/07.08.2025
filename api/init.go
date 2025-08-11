@@ -37,7 +37,6 @@ func RegisterUserHandlers(routerGroup *gin.RouterGroup, controller controller.Co
 	{
 		target_url := routerGroup.Group("/target-to-task/:id")
 		target_url.POST("", h.postTargetToTaskHandler)
-		target_url.GET("", h.deleteAFTERTESTHANDLER)
 	}
 	//--------------------------------------------------------------------------------status
 	{

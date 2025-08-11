@@ -15,24 +15,17 @@ func (c *Controller) ArchiveTask(id int) (*entity.Task, error) {
 	if err != nil {
 		return nil, err
 	}
+	var path string
 	task.Status = 1
-	//чкачать в папку downloads
-	// //создание папки если нет
-	// err = c.CreateFolder()
-	// if err != nil{
-	// 	return nil, err
-	// }
-	//скачиваем файлы по юрл
-
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		//todo АРХИВ go
 		task.Status = 2
-		task.ZipPath = "Pipa"
+		path, err = c.CreateZip(*task)
 		wg.Done()
 	}()
 	wg.Wait()
+	task.ZipPath = path
 	return task, nil
 }
 func (c *Controller) GetArchivePath(id int) (string, error) {
@@ -99,4 +92,21 @@ func (c *Controller) ArchiveFiles(files []entity.URLResult) (string, error) {
 	}
 
 	return archivePath, nil // путь к созданному архиву
+}
+func (c *Controller) CreateZip(task entity.Task) (string, error){
+	urls, err := c.CheckAvailability(task.URLSLice)
+	if err != nil{
+		return "", err
+	}
+	urls, err = c.CheckFileType(urls)
+	if err != nil{
+		return "", err
+	}
+	downloads := c.DownloadAllowedFiles(urls)
+	path, err := c.ArchiveFiles(downloads)
+	if err != nil{
+		return "", err
+	}
+	return path, nil
+
 }

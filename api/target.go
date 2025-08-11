@@ -40,44 +40,4 @@ func (h *handlers) postTargetToTaskHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, responce)
 }
 
-func (h *handlers) deleteAFTERTESTHANDLER(c *gin.Context) {
-	var uriID URIID
-	err := c.ShouldBindUri(&uriID)
-	if err != nil {
-		c.JSON(429, gin.H{
-			"error": err.Error(),
-		})
-	}
 
-	task, err := h.controller.GetTaskByID(uriID.ID)
-	if err != nil {
-		c.JSON(429, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-	results, err := h.controller.CheckAvailability(task.URLSLice)
-	if err != nil {
-		c.JSON(429, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-	res, err := h.controller.CheckFileType(results)
-	if err != nil {
-		c.JSON(429, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-	downloads := h.controller.DownloadAllowedFiles(res)
-	zip, err := h.controller.ArchiveFiles(downloads)
-	if err != nil {
-		c.JSON(429, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, zip)
-}

@@ -10,20 +10,19 @@ func (c *Controller) AddTargetToTaskByTaskID(id int, URLs []string) (*entity.Tas
 	}
 
 	//проверить статус, ессли доне то выходим
-	if task.Status == entity.TaskStatusDone {
-		return task, nil
+	if task.Status == entity.TaskStatusEmpty {
+		for _, item := range URLs {
+			task.URLSLice = append(task.URLSLice, item)
+			err = c.CheckTargetCountInTaskByID(id)
+			if err != nil {
+				//отправить на архивацию таску
+				task, err = c.ArchiveTask(id)
+				break
+			}
+		}
 	}
 	//проверить можем ли добавить задачу
-	for _, item := range URLs {
-		err = c.CheckTargetCountInTaskByID(id)
-		if err != nil {
-			//отправить на архивацию таску
-			task, err = c.ArchiveTask(id)
-			break
-		}
-		task.URLSLice = append(task.URLSLice, item)
-
-	}
+	
 
 	return task, nil
 }

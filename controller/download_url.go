@@ -3,6 +3,7 @@ package controller
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -50,13 +51,13 @@ func (c *Controller) CheckAvailability(urls []string) ([]entity.URLResult, error
 	}
 	//проверка на то, что все не доступно
 
-	var err error
-	err = nil
+	var errResult error
+	errResult = nil
 	if len(results) == 0 {
-		err = errors.New("no links available")
+		errResult = errors.New("no links available")
 	}
 
-	return results, err
+	return results, errResult
 }
 
 // проверка разрешенных файлов на основании ентити ЮРЛрезалт
@@ -156,6 +157,10 @@ func (c *Controller) downloadFile(client *http.Client, url, filepath string) err
 		return fmt.Errorf("cannot create file: %v", err)
 	}
 	defer out.Close()
+    _, err = io.Copy(out, resp.Body)
+    if err != nil {
+        return fmt.Errorf("failed to copy data to file: %w", err)
+    }
 
 	return nil
 }
