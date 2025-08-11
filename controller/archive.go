@@ -20,11 +20,12 @@ func (c *Controller) ArchiveTask(id int) (*entity.Task, error) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
-		task.Status = 2
+		time.Sleep(10000 * time.Millisecond)
 		path, err = c.CreateZip(*task)
 		wg.Done()
 	}()
 	wg.Wait()
+	task.Status = 2
 	task.ZipPath = path
 	return task, nil
 }
