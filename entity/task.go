@@ -19,11 +19,11 @@ type Task struct {
 func (s TaskStatus) String() string {
 	switch s {
 	case TaskStatusEmpty:
-		return "empty"
+		return "task is waiting for URL"
 	case TaskStatusArchive:
-		return "archive"
+		return "task performs archiving"
 	case TaskStatusDone:
-		return "done"
+		return "task complete archiving"
 	default:
 		return "unknown"
 	}
