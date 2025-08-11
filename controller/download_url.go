@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,20 +13,18 @@ import (
 )
 
 // проверка доступности
-func (c *Controller) CheckAvailability(urls []string) ([]entity.URLResult, error) {
+func (c *Controller) CheckAvailability(task *entity.Task) error {
 	client := &http.Client{Timeout: 10 * time.Second}
-	var results []entity.URLResult
-
-	for _, url := range urls {
-		result := entity.URLResult{URL: url}
-
-		resp, err := client.Head(url)
+	
+		
+	for i := range task.URLSLice {
+			url := &task.URLSLice[i]
+		resp, err := client.Head(url.URL)
 		if err != nil {
 			// Если HEAD не прошёл — пробуем GET
-			resp, err = client.Get(url)
+			resp, err = client.Get(url.URL)
 			if err != nil {
-				result.Error = err.Error()
-				results = append(results, result)
+				url.Error = err.Error()
 				continue
 			}
 			// У GET нужно закрыть тело
@@ -38,38 +35,28 @@ func (c *Controller) CheckAvailability(urls []string) ([]entity.URLResult, error
 		}
 
 		// Сохраняем Content-Type
-		result.FileType = resp.Header.Get("Content-Type")
+		url.FileType = resp.Header.Get("Content-Type")
 
 		// Проверяем статус
 		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
-			result.Availability = true
+			url.Availability = true
 		} else {
-			result.Error = fmt.Sprintf("HTTP %d", resp.StatusCode)
+			url.Error = fmt.Sprintf("HTTP %d", resp.StatusCode)
 		}
-
-		results = append(results, result)
-	}
-	//проверка на то, что все не доступно
-
-	var errResult error
-	errResult = nil
-	if len(results) == 0 {
-		errResult = errors.New("no links available")
 	}
 
-	return results, errResult
+	return  nil
 }
 
 // проверка разрешенных файлов на основании ентити ЮРЛрезалт
-func (c *Controller) CheckFileType(urls []entity.URLResult) ([]entity.URLResult, error) {
-	var updatedResults []entity.URLResult
-
-	for _, url := range urls {
+func (c *Controller) CheckFileType(task *entity.Task) error {
+	for i := range task.URLSLice {
+		url := &task.URLSLice[i]
 		// Копируем результат, чтобы не изменять "на лету"
-		r := url
-		r.Allowed = false
+		
+		url.Allowed = false
 		// Проверка по FileType
-		contentType := r.FileType
+		contentType := url.FileType
 		if contentType != "" {
 			// Убираем параметры после ';'
 			if idx := strings.Index(contentType, ";"); idx != -1 {
@@ -78,51 +65,44 @@ func (c *Controller) CheckFileType(urls []entity.URLResult) ([]entity.URLResult,
 			contentType = strings.TrimSpace(strings.ToLower(contentType))
 
 			if entity.AllowedMIMETypes[contentType] {
-				r.Allowed = true
-				updatedResults = append(updatedResults, r)
+				url.Allowed = true
+				
 				continue
 			}
 		}
 
 		// Если FileType не помог — проверяем по расширению URL
-		ext := strings.ToLower(filepath.Ext(r.URL))
+		ext := strings.ToLower(filepath.Ext(url.URL))
 		if entity.AllowedExtensions[ext] {
-			r.Allowed = true
-			updatedResults = append(updatedResults, r)
+			url.Allowed = true
+			
 			continue
 		}
-
 		// Если ни тип, ни расширение не подошли
-		r.Error = "file type not allowed"
-		updatedResults = append(updatedResults, r)
+		url.Error = "file type not allowed"
 	}
 
-	return updatedResults, nil
+	return nil
 }
 
 // скачивание файлов
-func (c *Controller) DownloadAllowedFiles(results []entity.URLResult) []entity.URLResult {
+func (c *Controller) DownloadAllowedFiles(task *entity.Task)  {
 	client := &http.Client{
 		Timeout: 30 * time.Second,
 	}
 
-	var updatedResults []entity.URLResult
-
-	for _, result := range results {
-		// Копируем результат
-		r := result
+	for i := range task.URLSLice {
+		url := &task.URLSLice[i]
 
 		// Пропускаем, если не доступен или не разрешён
-		if !r.Availability || !r.Allowed {
-			updatedResults = append(updatedResults, r)
+		if !url.Availability || !url.Allowed {
 			continue
 		}
 
 		// Генерируем безопасное имя файла
-		filename := c.sanitizeFilename(filepath.Base(r.URL))
+		filename := c.sanitizeFilename(filepath.Base(url.URL))
 		if filename == "" {
-			r.Error = "invalid filename in URL"
-			updatedResults = append(updatedResults, r)
+			url.Error = "invalid filename in URL"
 			continue
 		}
 
@@ -130,15 +110,12 @@ func (c *Controller) DownloadAllowedFiles(results []entity.URLResult) []entity.U
 		filePath := filepath.Join(entity.DownloadFolder, filename)
 
 		// Скачиваем
-		err := c.downloadFile(client, r.URL, filePath)
+		err := c.downloadFile(client, url.URL, filePath)
 		if err != nil {
-			r.Error = "download failed: " + err.Error()
+			url.Error = "download failed: " + err.Error()
 		}
-		r.FilePath = filePath
-		updatedResults = append(updatedResults, r)
+		url.FilePath = filePath
 	}
-
-	return updatedResults
 }
 func (c *Controller) downloadFile(client *http.Client, url, filepath string) error {
 	resp, err := client.Get(url)

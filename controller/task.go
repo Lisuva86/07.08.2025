@@ -2,6 +2,7 @@ package controller
 
 import (
 	"errors"
+	"fmt"
 	"zip_archive/entity"
 )
 
@@ -19,7 +20,8 @@ func (c *Controller) CreateTask() (int, *entity.Task, error) {
 	var task entity.Task
 	task.Status = 0
 	task.ZipPath = ""
-	task.URLSLice = make([]string, 0)
+	task.URLSLice = make([]entity.URLResult, 0)
+	task.TaskName = "Task_" + fmt.Sprintf("%d", len(c.storage))
 	c.storage = append(c.storage, task)
 	return len(c.storage) - 1, &task, nil
 }

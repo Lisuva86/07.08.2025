@@ -5,29 +5,19 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sync"
 	"time"
 	"zip_archive/entity"
 )
 
-func (c *Controller) ArchiveTask(id int) (*entity.Task, error) {
-	task, err := c.GetTaskByID(id)
-	if err != nil {
-		return nil, err
-	}
-	var path string
+func (c *Controller) ArchiveTask(task *entity.Task) error {
 	task.Status = 1
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		time.Sleep(10000 * time.Millisecond)
-		path, err = c.CreateZip(*task)
-		wg.Done()
-	}()
-	wg.Wait()
+	//time.Sleep(10000 * time.Millisecond)
+	err := c.CreateZip(task)
+	if err != nil{
+		return err
+	}
 	task.Status = 2
-	task.ZipPath = path
-	return task, nil
+	return nil
 }
 func (c *Controller) GetArchivePath(id int) (string, error) {
 	task, err := c.GetTaskByID(id)
@@ -36,16 +26,16 @@ func (c *Controller) GetArchivePath(id int) (string, error) {
 	}
 	return task.ZipPath, nil
 }
-func (c *Controller) ArchiveFiles(files []entity.URLResult) (string, error) {
+func (c *Controller) ArchiveFiles(task *entity.Task) error {
 	// Генерируем имя архива с меткой времени
 	timestamp := time.Now().Format("20060102_150405")
-	archiveName := "archive_" + timestamp + ".zip"
+	archiveName := task.TaskName + "_archive_" + timestamp + ".zip"
 	archivePath := filepath.Join(entity.ArchiveFolder, archiveName)
 
 	// Создаём архив
 	zipFile, err := os.Create(archivePath)
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer zipFile.Close()
 
@@ -53,7 +43,8 @@ func (c *Controller) ArchiveFiles(files []entity.URLResult) (string, error) {
 	defer zipWriter.Close()
 
 	// Добавляем каждый файл
-	for _, file := range files {
+
+	for _, file := range task.URLSLice {
 		filePath := file.FilePath
 		// Проверяем, существует ли файл
 		if filePath == "" {
@@ -88,26 +79,27 @@ func (c *Controller) ArchiveFiles(files []entity.URLResult) (string, error) {
 			_ = zipWriter.Close()
 			_ = zipFile.Close()
 			_ = os.Remove(archivePath)
-			return "", err
+			return err
 		}
 	}
+	task.ZipPath = archivePath
 
-	return archivePath, nil // путь к созданному архиву
+	return nil // путь к созданному архиву
 }
-func (c *Controller) CreateZip(task entity.Task) (string, error){
-	urls, err := c.CheckAvailability(task.URLSLice)
+func (c *Controller) CreateZip(task *entity.Task) error{
+	err := c.CheckAvailability(task)
 	if err != nil{
-		return "", err
+		return err
 	}
-	urls, err = c.CheckFileType(urls)
+	err = c.CheckFileType(task)
 	if err != nil{
-		return "", err
+		return err
 	}
-	downloads := c.DownloadAllowedFiles(urls)
-	path, err := c.ArchiveFiles(downloads)
+	c.DownloadAllowedFiles(task)
+	err = c.ArchiveFiles(task)
 	if err != nil{
-		return "", err
+		return err
 	}
-	return path, nil
+	return nil
 
 }

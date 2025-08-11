@@ -12,10 +12,9 @@ const (
 type Task struct {
 	Status   TaskStatus `json:"status"`
 	ZipPath  string     `json:"zip_path"`
-	URLSLice []string   `json:"urls"`
+	URLSLice []URLResult   `json:"urls"`
+	TaskName string `json:"task_name"`
 }
-
-//todo переделаь на URL result
 
 func (s TaskStatus) String() string {
 	switch s {

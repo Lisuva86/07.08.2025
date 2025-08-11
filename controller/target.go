@@ -12,11 +12,18 @@ func (c *Controller) AddTargetToTaskByTaskID(id int, URLs []string) (*entity.Tas
 	//проверить статус, ессли доне то выходим
 	if task.Status == entity.TaskStatusEmpty {
 		for _, item := range URLs {
-			task.URLSLice = append(task.URLSLice, item)
+			var url entity.URLResult
+			url.Allowed = false
+			url.Availability = false
+			url.Error = ""
+			url.URL = item
+			url.FilePath = ""
+			url.FileType = ""
+			task.URLSLice = append(task.URLSLice, url)
 			err = c.CheckTargetCountInTaskByID(id)
 			if err != nil {
 				//отправить на архивацию таску
-				task, err = c.ArchiveTask(id)
+				err = c.ArchiveTask(task)
 				break
 			}
 		}
